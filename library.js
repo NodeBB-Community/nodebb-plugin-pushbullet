@@ -4,6 +4,7 @@ var db = module.parent.require('./database'),
 	meta = module.parent.require('./meta'),
 	user = module.parent.require('./user'),
 	translator = module.parent.require('../public/src/translator'),
+	SocketPlugins = module.parent.require('./socket.io/plugins'),
 
 	winston = module.parent.require('winston'),
 	nconf = module.parent.require('nconf'),
@@ -21,19 +22,19 @@ var db = module.parent.require('./database'),
 
 	Pushbullet = {};
 
-Pushbullet.init = function(app, parent_middleware, controllers) {
-	var middleware = require('./middleware');
+Pushbullet.init = function(app, middleware, controllers) {
+	var pluginMiddleware = require('./middleware'),
+		pluginControllers = require('./controllers');
 
-	function render(req, res, next) {
-		res.render('admin/plugins/pushbullet', {});
-	}
-
-	app.get('/admin/plugins/pushbullet', parent_middleware.admin.buildHeader, render);
-	app.get('/api/admin/plugins/pushbullet', render);
+	// Admin setup routes
+	app.get('/admin/plugins/pushbullet', middleware.admin.buildHeader, pluginControllers.renderACP);
+	app.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
 
 	// Pushbullet-facing routes
-	app.get('/pushbullet/setup', middleware.hasConfig, Pushbullet.redirectSetup);
-	app.get('/pushbullet/auth', middleware.hasConfig, middleware.hasCode, middleware.isLoggedIn, Pushbullet.completeSetup);
+	app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
+	app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, middleware.buildHeader, pluginControllers.renderAuthSuccess);
+	app.get('/pushbullet/settings', middleware.buildHeader, pluginControllers.renderSettings);
+	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginControllers.renderSettings);
 
 	// Config set-up
 	db.getObject('settings:pushbullet', function(err, config) {
@@ -54,6 +55,14 @@ Pushbullet.init = function(app, parent_middleware, controllers) {
 		if (!err && numUsers > 0) cacheOpts.max = Math.floor(numUsers / 20);
 		lang_cache = cache(cacheOpts);
 	});
+
+	// WebSocket listeners
+	SocketPlugins.pushbullet = {
+		settings: {
+			save: Pushbullet.settings.save,
+			load: Pushbullet.settings.load
+		}
+	};
 };
 
 Pushbullet.redirectSetup = function(req, res) {
@@ -66,7 +75,7 @@ Pushbullet.redirectSetup = function(req, res) {
 	res.redirect(constants.authorize_url + '?' + qs);
 };
 
-Pushbullet.completeSetup = function(req, res) {
+Pushbullet.completeSetup = function(req, res, next) {
 	async.waterfall([
 		function(next) {
 			Pushbullet.retrieveToken(req.query.code, next);
@@ -74,9 +83,7 @@ Pushbullet.completeSetup = function(req, res) {
 		function(token, next) {
 			Pushbullet.saveToken(req.user.uid, token, next);
 		}
-	], function(err) {
-		res.send(err ? 500 : 200, err ? err.message : 'done!');
-	});
+	], next);
 };
 
 Pushbullet.push = function(notifObj) {
@@ -171,6 +178,25 @@ Pushbullet.getUserLanguage = function(uid, callback) {
 			lang_cache.set(uid, language);
 		});
 	}
-}
+};
+
+/* Settings */
+Pushbullet.settings = {};
+
+Pushbullet.settings.save = function(socket, data, callback) {
+	if (socket.hasOwnProperty('uid') && socket.uid > 0) {
+		db.setObject('user:' + socket.uid + ':settings', data, callback);
+	} else {
+		callback(new Error('not-logged-in'));
+	}
+};
+
+Pushbullet.settings.load = function(socket, data, callback) {
+	if (socket.hasOwnProperty('uid') && socket.uid > 0) {
+		db.getObjectFields('user:' + socket.uid + ':settings', ['pushbullet:enabled'], callback);
+	} else {
+		callback(new Error('not-logged-in'));
+	}
+};
 
 module.exports = Pushbullet;
