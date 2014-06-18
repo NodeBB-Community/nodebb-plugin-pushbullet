@@ -135,8 +135,13 @@ Pushbullet.push = function(notifObj) {
 							} else if (result.length) {
 								try {
 									result = JSON.parse(result);
-									if (result.error) {
-										winston.error('[plugins/pushbullet] ' + result.error.message + '(' + result.error.type + ')');
+									if (result.error && result.error.type === 'invalid_user') {
+										winston.info('[plugins/pushbullet] uid ' + notifObj.uid + ' has disassociated, removing token.');
+										Pushbullet.disassociate({
+											uid: notifObj.uid
+										});
+									} else {
+										winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
 									}
 								} catch (e) {
 									winston.error(e);
