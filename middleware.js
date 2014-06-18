@@ -7,8 +7,13 @@ Middleware.hasConfig = function(req, res, next) {
 };
 
 Middleware.hasCode = function(req, res, next) {
-	if (req.query && req.query.code) next();
-	else res.redirect('404');
+	if (req.query && req.query.code) {
+		next();
+	} else if (req.query.hasOwnProperty('error') && req.query.error === 'access_denied') {
+		res.redirect('pushbullet/settings');
+	} else {
+		res.redirect('404');
+	}
 };
 
 Middleware.isLoggedIn = function(req, res, next) {
