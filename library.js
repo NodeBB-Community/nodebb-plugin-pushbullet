@@ -102,45 +102,50 @@ Pushbullet.disassociate = function(socket, data, callback) {
 
 Pushbullet.push = function(notifObj) {
 	// Determine whether the user will receive notifications via Pushbullet
-	db.getObjectField('pushbullet:tokens', notifObj.uid, function(err, token) {
-		if (token) {
-			async.waterfall([
-				function(next) {
-					Pushbullet.getUserLanguage(notifObj.uid, next);
-				},
-				function(lang, next) {
-					translator.translate(notifObj.text, lang, function(translated) {
-						next(undefined, S(translated).stripTags().s);
-					});
-				},
-				function(body, next) {
-					var	payload = {
-						type: 'link',
-						title: 'New Notification from ' + (meta.config.title || 'NodeBB'),
-						url: nconf.get('url') + notifObj.path,
-						body: body
-					}
-					request.post(constants.push_url, {
-						form: payload,
-						auth: {
-							user: token
+	async.parallel({
+		token: async.apply(db.getObjectField, 'pushbullet:tokens', notifObj.uid),
+		enabled: async.apply(db.getObjectField, 'user:' + notifObj.uid + ':settings', 'pushbullet:enabled')
+	}, function(err, results) {
+		if (!err && results) {
+			if (results.token && parseInt(results.enabled, 10) !== 1) {
+				async.waterfall([
+					function(next) {
+						Pushbullet.getUserLanguage(notifObj.uid, next);
+					},
+					function(lang, next) {
+						translator.translate(notifObj.text, lang, function(translated) {
+							next(undefined, S(translated).stripTags().s);
+						});
+					},
+					function(body, next) {
+						var	payload = {
+							type: 'link',
+							title: 'New Notification from ' + (meta.config.title || 'NodeBB'),
+							url: nconf.get('url') + notifObj.path,
+							body: body
 						}
-					}, function(err, request, result) {
-						if (err) {
-							winston.error(err);
-						} else if (result.length) {
-							try {
-								result = JSON.parse(result);
-								if (result.error) {
-									winston.error('[plugins/pushbullet] ' + result.error.message + '(' + result.error.type + ')');
-								}
-							} catch (e) {
-								winston.error(e);
+						request.post(constants.push_url, {
+							form: payload,
+							auth: {
+								user: results.token
 							}
-						}
-					});
-				}
-			]);
+						}, function(err, request, result) {
+							if (err) {
+								winston.error(err);
+							} else if (result.length) {
+								try {
+									result = JSON.parse(result);
+									if (result.error) {
+										winston.error('[plugins/pushbullet] ' + result.error.message + '(' + result.error.type + ')');
+									}
+								} catch (e) {
+									winston.error(e);
+								}
+							}
+						});
+					}
+				]);
+			}
 		}
 	});
 };
