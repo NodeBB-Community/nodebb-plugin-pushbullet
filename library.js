@@ -166,8 +166,9 @@ Pushbullet.getUserLanguage = function(uid, callback) {
 		callback(null, lang_cache.get(uid));
 	} else {
 		user.getSettings(uid, function(err, settings) {
-			callback(null, 'en_GB');
-			// cache.set(uid, settings.defaultLang);
+			var language = settings.language || meta.config.defaultLang || 'en_GB';
+			callback(null, language);
+			lang_cache.set(uid, language);
 		});
 	}
 }
