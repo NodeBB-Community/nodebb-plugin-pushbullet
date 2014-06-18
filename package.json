@@ -1,0 +1,28 @@
+{
+  "name": "nodebb-plugin-pushbullet",
+  "version": "0.0.0",
+  "description": "A starter kit for quickly creating NodeBB plugins",
+  "main": "library.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/julianlam/nodebb-plugin-pushbullet"
+  },
+  "keywords": [
+    "nodebb",
+    "plugin",
+    "pushbullet",
+    "push notifications"
+  ],
+  "author": {
+    "name": "julianlam",
+    "email": "julian@nodebb.org"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/julianlam/nodebb-plugin-pushbullet/issues"
+  },
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "lru-cache": "^2.5.0"
+  }
+}
