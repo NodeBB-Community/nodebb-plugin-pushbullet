@@ -156,13 +156,15 @@ Pushbullet.addMenuItem = function(custom_header, callback) {
 };
 
 Pushbullet.addProfileItem = function(links, callback) {
-	links.push({
-		id: 'pushbullet',
-		route: '../../pushbullet/settings',
-		icon: 'fa-mobile',
-		name: 'Pushbullet',
-		public: false
-	});
+	if (Pushbullet.config && Pushbullet.config.id && Pushbullet.config.secret) {
+		links.push({
+			id: 'pushbullet',
+			route: '../../pushbullet/settings',
+			icon: 'fa-mobile',
+			name: 'Pushbullet',
+			public: false
+		});
+	}
 
 	callback(null, links);
 };
