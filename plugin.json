@@ -7,17 +7,12 @@
 	"hooks": [
 		{ "hook": "action:app.load", "method": "init" },
 		{ "hook": "filter:admin.header.build", "method": "addMenuItem" },
-		{ "hook": "action:notification.pushed", "method": "push" }
+		{ "hook": "action:notification.pushed", "method": "push" },
+		{ "hook": "filter:user.profileLinks", "method": "addProfileItem" }
 	],
 	"templates": "static/templates",
-	"staticDirs": {
-		"static": "./static"
-	},
 	"less": [
 		"static/style.less"
-	],
-	"scripts": [
-		"static/lib/main.js"
 	],
 	"compatibility": "~0.5.0"
 }

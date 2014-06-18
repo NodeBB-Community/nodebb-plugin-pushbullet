@@ -33,6 +33,8 @@ Pushbullet.init = function(app, middleware, controllers) {
 	// Pushbullet-facing routes
 	app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
 	app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, middleware.buildHeader, pluginControllers.renderAuthSuccess);
+	// app.get('/user/:userslug/pushbullet', middleware.buildHeader, middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
+	// app.get('/api/user/:userslug/pushbullet', middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
 	app.get('/pushbullet/settings', middleware.buildHeader, pluginControllers.renderSettings);
 	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginControllers.renderSettings);
 
@@ -139,7 +141,19 @@ Pushbullet.addMenuItem = function(custom_header, callback) {
 	});
 
 	callback(null, custom_header);
-}
+};
+
+Pushbullet.addProfileItem = function(links, callback) {
+	links.push({
+		id: 'pushbullet',
+		route: '../../pushbullet/settings',
+		icon: 'fa-mobile',
+		name: 'Pushbullet',
+		public: false
+	});
+
+	callback(null, links);
+};
 
 Pushbullet.retrieveToken = function(code, callback) {
 	request.post('https://api.pushbullet.com/oauth2/token', {
