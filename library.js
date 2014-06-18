@@ -32,11 +32,14 @@ Pushbullet.init = function(app, middleware, controllers) {
 
 	// Pushbullet-facing routes
 	app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
+	app.get('/api/pushbullet/setup', function(req, res) {
+		res.json(200, {});
+	});
 	app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, middleware.buildHeader, pluginControllers.renderAuthSuccess);
 	// app.get('/user/:userslug/pushbullet', middleware.buildHeader, middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
 	// app.get('/api/user/:userslug/pushbullet', middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
-	app.get('/pushbullet/settings', middleware.buildHeader, pluginControllers.renderSettings);
-	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginControllers.renderSettings);
+	app.get('/pushbullet/settings', middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 
 	// Config set-up
 	db.getObject('settings:pushbullet', function(err, config) {
@@ -63,7 +66,8 @@ Pushbullet.init = function(app, middleware, controllers) {
 		settings: {
 			save: Pushbullet.settings.save,
 			load: Pushbullet.settings.load
-		}
+		},
+		disassociate: Pushbullet.disassociate
 	};
 };
 
@@ -86,6 +90,14 @@ Pushbullet.completeSetup = function(req, res, next) {
 			Pushbullet.saveToken(req.user.uid, token, next);
 		}
 	], next);
+};
+
+Pushbullet.disassociate = function(socket, data, callback) {
+	if (socket.uid) {
+		db.deleteObjectField('pushbullet:tokens', socket.uid, callback);
+	} else {
+		callback(new Error('[[error:not-logged-in]]'));
+	}
 };
 
 Pushbullet.push = function(notifObj) {
@@ -192,6 +204,10 @@ Pushbullet.getUserLanguage = function(uid, callback) {
 			lang_cache.set(uid, language);
 		});
 	}
+};
+
+Pushbullet.isUserAssociated = function(uid, callback) {
+	db.isObjectField('pushbullet:tokens', uid, callback);
 };
 
 /* Settings */

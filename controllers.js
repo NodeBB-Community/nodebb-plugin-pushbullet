@@ -13,7 +13,8 @@ Controllers.renderAuthSuccess = function(req, res) {
 
 Controllers.renderSettings = function(req, res) {
 	res.render('pushbullet/settings', {
-		"site_title": meta.config.title || meta.config.browserTitle || 'NodeBB'
+		"site_title": meta.config.title || meta.config.browserTitle || 'NodeBB',
+		setupRequired: res.locals.setupRequired
 	});
 };
 

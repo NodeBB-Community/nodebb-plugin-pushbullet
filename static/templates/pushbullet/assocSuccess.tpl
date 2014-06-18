@@ -2,9 +2,9 @@
 	<div class="panel panel-success">
 		<div class="panel-body">
 			<img class="pull-right" src="//www.pushbullet.com/img/header-logo.png" />
-			<h1>Your NodeBB account is now associated with your Pushbullet account!</h1>
+			<h1>Your account is now associated with Pushbullet!</h1>
 			<p>
-				Congratulations! You should be able to receive notifications to all associated Pushbullet devices.
+				Congratulations! You should now be able to receive notifications to all associated Pushbullet devices.
 			</p>
 			<p>
 				<div class="btn-group">
