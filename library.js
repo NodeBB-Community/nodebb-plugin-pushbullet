@@ -107,7 +107,7 @@ Pushbullet.push = function(notifObj) {
 		enabled: async.apply(db.getObjectField, 'user:' + notifObj.uid + ':settings', 'pushbullet:enabled')
 	}, function(err, results) {
 		if (!err && results) {
-			if (results.token && parseInt(results.enabled, 10) !== 1) {
+			if (results.token && parseInt(results.enabled, 10) !== 0) {
 				async.waterfall([
 					function(next) {
 						Pushbullet.getUserLanguage(notifObj.uid, next);
