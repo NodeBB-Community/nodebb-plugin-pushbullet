@@ -113,17 +113,19 @@ Pushbullet.push = function(notifObj) {
 						Pushbullet.getUserLanguage(notifObj.uid, next);
 					},
 					function(lang, next) {
-						translator.translate(notifObj.text, lang, function(translated) {
+						notifObj.bodyLong = S(notifObj.bodyLong).stripTags().s;
+						translator.translate(notifObj.bodyShort, lang, function(translated) {
 							next(undefined, S(translated).stripTags().s);
 						});
 					},
-					function(body, next) {
+					function(title, next) {
 						var	payload = {
-							type: 'link',
-							title: 'New Notification from ' + (meta.config.title || 'NodeBB'),
-							url: nconf.get('url') + notifObj.path,
-							body: body
-						}
+								type: 'link',
+								title: title,
+								url: nconf.get('url') + notifObj.path,
+								body: notifObj.bodyLong
+							};
+
 						request.post(constants.push_url, {
 							form: payload,
 							auth: {
@@ -131,20 +133,20 @@ Pushbullet.push = function(notifObj) {
 							}
 						}, function(err, request, result) {
 							if (err) {
-								winston.error(err);
+								winston.error('[plugins/pushbullet] ' + err.message);
 							} else if (result.length) {
 								try {
 									result = JSON.parse(result);
-									if (result.error && result.error.type === 'invalid_user') {
+									if (result.hasOwnProperty('error') && result.error.type === 'invalid_user') {
 										winston.info('[plugins/pushbullet] uid ' + notifObj.uid + ' has disassociated, removing token.');
 										Pushbullet.disassociate({
 											uid: notifObj.uid
 										});
-									} else {
+									} else if (result.hasOwnProperty('error')) {
 										winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
 									}
 								} catch (e) {
-									winston.error(e);
+									winston.error('[plugins/pushbullet] ' + e);
 								}
 							}
 						});
