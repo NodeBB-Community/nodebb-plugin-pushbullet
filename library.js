@@ -113,7 +113,7 @@ Pushbullet.push = function(notifObj) {
 						Pushbullet.getUserLanguage(notifObj.uid, next);
 					},
 					function(lang, next) {
-						notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().s;
+						notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
 						translator.translate(notifObj.bodyShort, lang, function(translated) {
 							next(undefined, S(translated).stripTags().s);
 						});
