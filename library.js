@@ -120,7 +120,7 @@ Pushbullet.push = function(notifObj) {
 					},
 					function(title, next) {
 						var	payload = {
-								device_iden: results.settings['pushbullet:target'].length ? results.settings['pushbullet:target'] : null,
+								device_iden: results.settings['pushbullet:target'] && results.settings['pushbullet:target'].length ? results.settings['pushbullet:target'] : null,
 								type: 'link',
 								title: title,
 								url: nconf.get('url') + notifObj.path,
