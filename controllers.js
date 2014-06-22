@@ -4,7 +4,12 @@ var Pushbullet = require('./library'),
 	Controllers = {};
 
 Controllers.renderACP = function(req, res) {
-	res.render('admin/plugins/pushbullet', {});
+	Pushbullet.getAssociatedUsers(function(err, users) {
+		res.render('admin/plugins/pushbullet', {
+			users: users,
+			numAssoc: users.length
+		});
+	});
 };
 
 Controllers.renderAuthSuccess = function(req, res) {

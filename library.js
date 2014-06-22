@@ -224,6 +224,16 @@ Pushbullet.isUserAssociated = function(uid, callback) {
 	db.isObjectField('pushbullet:tokens', uid, callback);
 };
 
+Pushbullet.getAssociatedUsers = function(callback) {
+	db.getObjectKeys('pushbullet:tokens', function(err, uids) {
+		if (!err) {
+			user.getMultipleUserFields(uids, ['username', 'picture'], callback);
+		} else {
+			callback(err);
+		}
+	});
+};
+
 /* Settings */
 Pushbullet.settings = {};
 
