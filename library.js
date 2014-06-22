@@ -104,10 +104,10 @@ Pushbullet.push = function(notifObj) {
 	// Determine whether the user will receive notifications via Pushbullet
 	async.parallel({
 		token: async.apply(db.getObjectField, 'pushbullet:tokens', notifObj.uid),
-		enabled: async.apply(db.getObjectField, 'user:' + notifObj.uid + ':settings', 'pushbullet:enabled')
+		settings: async.apply(db.getObjectFields, 'user:' + notifObj.uid + ':settings', ['pushbullet:enabled', 'pushbullet:target'])
 	}, function(err, results) {
 		if (!err && results) {
-			if (results.token && parseInt(results.enabled, 10) !== 0) {
+			if (results.token && parseInt(results.settings['pushbullet:enabled'], 10) !== 0) {
 				async.waterfall([
 					function(next) {
 						Pushbullet.getUserLanguage(notifObj.uid, next);
@@ -120,6 +120,7 @@ Pushbullet.push = function(notifObj) {
 					},
 					function(title, next) {
 						var	payload = {
+								device_iden: results.settings['pushbullet:target'].length ? results.settings['pushbullet:target'] : null,
 								type: 'link',
 								title: title,
 								url: nconf.get('url') + notifObj.path,
@@ -220,6 +221,38 @@ Pushbullet.getUserLanguage = function(uid, callback) {
 	}
 };
 
+Pushbullet.getUserDevices = function(uid, callback) {
+	async.parallel({
+		token: async.apply(db.getObjectField, 'pushbullet:tokens', uid),
+		target: async.apply(db.getObjectField, 'user:' + uid + ':settings', 'pushbullet:target')
+	}, function(err, results) {
+		request.get('https://api.pushbullet.com/v2/devices', {
+			auth: {
+				user: results.token
+			}
+		}, function(err, request, response) {
+			if (!err && request.statusCode === 200) {
+				try {
+					response = JSON.parse(response);
+					
+					var devices = response.devices.map(function(device) {
+							return {
+								iden: device.iden,
+								name: device.nickname || device.model
+							}
+						});
+
+					callback(null, devices);
+				} catch(e) {
+					callback(null, []);
+				}
+			} else {
+				callback(null, []);
+			}
+		});
+	});
+};
+
 Pushbullet.isUserAssociated = function(uid, callback) {
 	db.isObjectField('pushbullet:tokens', uid, callback);
 };
@@ -247,7 +280,7 @@ Pushbullet.settings.save = function(socket, data, callback) {
 
 Pushbullet.settings.load = function(socket, data, callback) {
 	if (socket.hasOwnProperty('uid') && socket.uid > 0) {
-		db.getObjectFields('user:' + socket.uid + ':settings', ['pushbullet:enabled'], callback);
+		db.getObjectFields('user:' + socket.uid + ':settings', ['pushbullet:enabled', 'pushbullet:target'], callback);
 	} else {
 		callback(new Error('not-logged-in'));
 	}

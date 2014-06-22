@@ -17,9 +17,12 @@ Controllers.renderAuthSuccess = function(req, res) {
 };
 
 Controllers.renderSettings = function(req, res) {
-	res.render('pushbullet/settings', {
-		"site_title": meta.config.title || meta.config.browserTitle || 'NodeBB',
-		setupRequired: res.locals.setupRequired
+	Pushbullet.getUserDevices(req.user.uid, function(err, devices) {
+		res.render('pushbullet/settings', {
+			"site_title": meta.config.title || meta.config.browserTitle || 'NodeBB',
+			setupRequired: res.locals.setupRequired,
+			devices: devices
+		});
 	});
 };
 
