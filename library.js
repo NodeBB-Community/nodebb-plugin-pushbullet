@@ -226,30 +226,34 @@ Pushbullet.getUserDevices = function(uid, callback) {
 		token: async.apply(db.getObjectField, 'pushbullet:tokens', uid),
 		target: async.apply(db.getObjectField, 'user:' + uid + ':settings', 'pushbullet:target')
 	}, function(err, results) {
-		request.get('https://api.pushbullet.com/v2/devices', {
-			auth: {
-				user: results.token
-			}
-		}, function(err, request, response) {
-			if (!err && request.statusCode === 200) {
-				try {
-					response = JSON.parse(response);
-					
-					var devices = response.devices.map(function(device) {
-							return {
-								iden: device.iden,
-								name: device.nickname || device.model
-							}
-						});
+		if (results.token) {
+			request.get('https://api.pushbullet.com/v2/devices', {
+				auth: {
+					user: results.token
+				}
+			}, function(err, request, response) {
+				if (!err && request.statusCode === 200) {
+					try {
+						response = JSON.parse(response);
 
-					callback(null, devices);
-				} catch(e) {
+						var devices = response.devices.map(function(device) {
+								return {
+									iden: device.iden,
+									name: device.nickname || device.model
+								}
+							});
+
+						callback(null, devices);
+					} catch(e) {
+						callback(null, []);
+					}
+				} else {
 					callback(null, []);
 				}
-			} else {
-				callback(null, []);
-			}
-		});
+			});
+		} else {
+			callback(null, []);
+		}
 	});
 };
 
