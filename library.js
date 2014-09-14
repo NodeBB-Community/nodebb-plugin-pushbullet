@@ -13,7 +13,7 @@ var db = module.parent.require('./database'),
 	S = module.parent.require('string'),
 	querystring = require('querystring'),
 	cache = require('lru-cache'),
-	lang_cache = undefined,
+	lang_cache,
 
 	constants = Object.freeze({
 		authorize_url: 'https://www.pushbullet.com/authorize',
@@ -57,7 +57,9 @@ Pushbullet.init = function(app, middleware, controllers) {
 				maxAge: 1000 * 60 * 60 * 24
 			};
 
-		if (!err && numUsers > 0) cacheOpts.max = Math.floor(numUsers / 20);
+		if (!err && numUsers > 0) {
+			cacheOpts.max = Math.floor(numUsers / 20);
+		}
 		lang_cache = cache(cacheOpts);
 	});
 
@@ -100,63 +102,86 @@ Pushbullet.disassociate = function(socket, data, callback) {
 	}
 };
 
-Pushbullet.push = function(notifObj) {
-	// Determine whether the user will receive notifications via Pushbullet
-	async.parallel({
-		token: async.apply(db.getObjectField, 'pushbullet:tokens', notifObj.uid),
-		settings: async.apply(db.getObjectFields, 'user:' + notifObj.uid + ':settings', ['pushbullet:enabled', 'pushbullet:target'])
-	}, function(err, results) {
-		if (!err && results) {
-			if (results.token && parseInt(results.settings['pushbullet:enabled'], 10) !== 0) {
-				async.waterfall([
-					function(next) {
-						Pushbullet.getUserLanguage(notifObj.uid, next);
-					},
-					function(lang, next) {
-						notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
-						translator.translate(notifObj.bodyShort, lang, function(translated) {
-							next(undefined, S(translated).stripTags().s);
-						});
-					},
-					function(title, next) {
-						var	payload = {
-								device_iden: results.settings['pushbullet:target'] && results.settings['pushbullet:target'].length ? results.settings['pushbullet:target'] : null,
-								type: 'link',
-								title: title,
-								url: nconf.get('url') + notifObj.path,
-								body: notifObj.bodyLong
-							};
+Pushbullet.push = function(data) {
+	var notifObj = data.notification;
+	var uids = data.uids;
 
-						request.post(constants.push_url, {
-							form: payload,
-							auth: {
-								user: results.token
-							}
-						}, function(err, request, result) {
-							if (err) {
-								winston.error('[plugins/pushbullet] ' + err.message);
-							} else if (result.length) {
-								try {
-									result = JSON.parse(result);
-									if (result.hasOwnProperty('error') && result.error.type === 'invalid_user') {
-										winston.info('[plugins/pushbullet] uid ' + notifObj.uid + ' has disassociated, removing token.');
-										Pushbullet.disassociate({
-											uid: notifObj.uid
-										});
-									} else if (result.hasOwnProperty('error')) {
-										winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
-									}
-								} catch (e) {
-									winston.error('[plugins/pushbullet] ' + e);
-								}
-							}
-						});
-					}
-				]);
-			}
+	if (!Array.isArray(uids) || !uids.length || !notifObj) {
+		return;
+	}
+
+	var settingsKeys = uids.map(function(uid) {
+		return 'user:' + uid + ':settings';
+	});
+
+	async.parallel({
+		tokens: async.apply(db.getObjectsFields, 'pushbullet:tokens', uids),
+		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target'])
+	}, function(err, results) {
+		if (err) {
+			return winston.error(err.stack);
+		}
+
+		if (Array.isArray(results.tokens)) {
+			uids.forEach(function(uid, index) {
+				if (!results.tokens[index] || !results.settings[index]) {
+					return;
+				}
+				if (parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
+					pushToUid(uid, notifObj, results.tokens[index][uid], results.settings[index]);
+				}
+			});
 		}
 	});
 };
+
+function pushToUid(uid, notifObj, token, settings) {
+	async.waterfall([
+		function(next) {
+			Pushbullet.getUserLanguage(uid, next);
+		},
+		function(lang, next) {
+			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
+			translator.translate(notifObj.bodyShort, lang, function(translated) {
+				next(undefined, S(translated).stripTags().s);
+			});
+		},
+		function(title, next) {
+			var	payload = {
+					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
+					type: 'link',
+					title: title,
+					url: nconf.get('url') + notifObj.path,
+					body: notifObj.bodyLong
+				};
+
+			request.post(constants.push_url, {
+				form: payload,
+				auth: {
+					user: token
+				}
+			}, function(err, request, result) {
+				if (err) {
+					winston.error('[plugins/pushbullet] ' + err.message);
+				} else if (result.length) {
+					try {
+						result = JSON.parse(result);
+						if (result.hasOwnProperty('error') && result.error.type === 'invalid_user') {
+							winston.info('[plugins/pushbullet] uid ' + uid + ' has disassociated, removing token.');
+							Pushbullet.disassociate({
+								uid: uid
+							});
+						} else if (result.hasOwnProperty('error')) {
+							winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
+						}
+					} catch (e) {
+						winston.error('[plugins/pushbullet] ' + e);
+					}
+				}
+			});
+		}
+	]);
+}
 
 Pushbullet.addMenuItem = function(custom_header, callback) {
 	custom_header.plugins.push({
@@ -198,7 +223,7 @@ Pushbullet.retrieveToken = function(code, callback) {
 			} catch (err) {
 				callback(err);
 			}
-			
+
 		} else {
 			callback(err || new Error(response.error.type));
 		}
@@ -240,7 +265,7 @@ Pushbullet.getUserDevices = function(uid, callback) {
 								return {
 									iden: device.iden,
 									name: device.nickname || device.model
-								}
+								};
 							});
 
 						callback(null, devices);
