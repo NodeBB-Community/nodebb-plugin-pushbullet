@@ -5,7 +5,7 @@
 	"url": "https://github.com/julianlam/nodebb-plugin-pushbullet",
 	"library": "./library.js",
 	"hooks": [
-		{ "hook": "action:app.load", "method": "init" },
+		{ "hook": "static:app.load", "method": "init" },
 		{ "hook": "filter:admin.header.build", "method": "addMenuItem" },
 		{ "hook": "action:notification.pushed", "method": "push" },
 		{ "hook": "filter:user.profileLinks", "method": "addProfileItem" }
@@ -17,5 +17,5 @@
 	"scripts": [
 		"lib/client-settings.js"
 	],
-	"compatibility": "~0.5.0"
+	"compatibility": "~0.5.1"
 }

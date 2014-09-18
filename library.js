@@ -22,7 +22,7 @@ var db = module.parent.require('./database'),
 
 	Pushbullet = {};
 
-Pushbullet.init = function(app, middleware, controllers) {
+Pushbullet.init = function(app, middleware, controllers, callback) {
 	var pluginMiddleware = require('./middleware'),
 		pluginControllers = require('./controllers');
 
@@ -71,6 +71,8 @@ Pushbullet.init = function(app, middleware, controllers) {
 		},
 		disassociate: Pushbullet.disassociate
 	};
+
+	callback();
 };
 
 Pushbullet.redirectSetup = function(req, res) {
