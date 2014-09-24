@@ -138,6 +138,9 @@ Pushbullet.push = function(data) {
 };
 
 function pushToUid(uid, notifObj, token, settings) {
+	if (!token) {
+		return;
+	}
 	async.waterfall([
 		function(next) {
 			Pushbullet.getUserLanguage(uid, next);
