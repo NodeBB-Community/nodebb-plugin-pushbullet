@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-pushbullet",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A starter kit for quickly creating NodeBB plugins",
   "main": "library.js",
   "repository": {
