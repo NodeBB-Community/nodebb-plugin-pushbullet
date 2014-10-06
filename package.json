@@ -5,7 +5,7 @@
   "main": "library.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/julianlam/nodebb-plugin-pushbullet"
+    "url": "https://github.com/nodebb/nodebb-plugin-pushbullet"
   },
   "keywords": [
     "nodebb",
@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/julianlam/nodebb-plugin-pushbullet/issues"
+    "url": "https://github.com/nodebb/nodebb-plugin-pushbullet/issues"
   },
   "readmeFilename": "README.md",
   "dependencies": {

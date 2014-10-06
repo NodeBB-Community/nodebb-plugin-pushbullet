@@ -2,7 +2,7 @@
 	"id": "nodebb-plugin-pushbullet",
 	"name": "Pushbullet Notifications",
 	"description": "Allows NodeBB to interface with the Pushbullet service in order to provide push notifications to user mobile phones",
-	"url": "https://github.com/julianlam/nodebb-plugin-pushbullet",
+	"url": "https://github.com/nodebb/nodebb-plugin-pushbullet",
 	"library": "./library.js",
 	"hooks": [
 		{ "hook": "static:app.load", "method": "init" },
