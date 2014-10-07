@@ -141,6 +141,7 @@ function pushToUid(uid, notifObj, token, settings) {
 	if (!token) {
 		return;
 	}
+
 	async.waterfall([
 		function(next) {
 			Pushbullet.getUserLanguage(uid, next);
@@ -154,7 +155,7 @@ function pushToUid(uid, notifObj, token, settings) {
 					});
 				},
 				postIndex: async.apply(posts.getPidIndex, notifObj.pid, uid),
-				topicSlug: async.apply(topics.getTopicField, notifObj.tid, 'slug')
+				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
 			}, next);
 		},
 		function(data, next) {
