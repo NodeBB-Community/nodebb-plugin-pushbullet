@@ -33,11 +33,9 @@ Pushbullet.init = function(app, middleware, controllers, callback) {
 	// Pushbullet-facing routes
 	app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
 	app.get('/api/pushbullet/setup', function(req, res) {
-		res.json(200, {});
+		res.status(200).json({});
 	});
 	app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, middleware.buildHeader, pluginControllers.renderAuthSuccess);
-	// app.get('/user/:userslug/pushbullet', middleware.buildHeader, middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
-	// app.get('/api/user/:userslug/pushbullet', middleware.checkGlobalPrivacySettings, middleware.checkAccountPermissions, pluginControllers.renderSettings);
 	app.get('/pushbullet/settings', middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 

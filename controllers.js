@@ -1,5 +1,6 @@
 var Pushbullet = require('./library'),
 	meta = module.parent.parent.require('./meta'),
+	nconf = module.parent.parent.require('nconf'),
 
 	Controllers = {};
 
@@ -7,7 +8,8 @@ Controllers.renderACP = function(req, res) {
 	Pushbullet.getAssociatedUsers(function(err, users) {
 		res.render('admin/plugins/pushbullet', {
 			users: users,
-			numAssoc: users.length
+			numAssoc: users.length,
+			url: nconf.get('url')
 		});
 	});
 };

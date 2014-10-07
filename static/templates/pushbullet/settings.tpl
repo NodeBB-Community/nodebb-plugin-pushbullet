@@ -64,12 +64,14 @@
 					<a class="btn btn-lg btn-primary" href="{relative_path}/pushbullet/setup">Associate account with Pushbullet</a>
 				</p>
 
-				<a href="https://play.google.com/store/apps/details?id=com.pushbullet.android">
-					<img src="//pushbullet.com/img/googleplay.png" height="60px">
-				</a>
-				<a href="https://itunes.apple.com/us/app/pushbullet/id810352052">
-					<img src="//pushbullet.com/img/apple-store.png" height="60px">
-				</a>
+				<div class="store-buttons">
+					<a href="https://play.google.com/store/apps/details?id=com.pushbullet.android">
+						<img class="store" src="//pushbullet.com/img/frontpage/get-it-android.png" height="82px" width="240px">
+					</a>
+					<a href="https://itunes.apple.com/us/app/pushbullet/id810352052">
+						<img class="store" src="//pushbullet.com/img/frontpage/get-it-iphone.png" height="82px" width="240px">
+					</a>
+				</div>
 			</div>
 		</div>
 		<!-- ENDIF !setupRequired -->
