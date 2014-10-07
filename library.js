@@ -115,20 +115,20 @@ Pushbullet.push = function(data) {
 	});
 
 	async.parallel({
-		tokens: async.apply(db.getObjectsFields, 'pushbullet:tokens', uids),
+		tokens: async.apply(db.getObjectFields, 'pushbullet:tokens', uids),
 		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target'])
 	}, function(err, results) {
 		if (err) {
 			return winston.error(err.stack);
 		}
 
-		if (Array.isArray(results.tokens)) {
+		if (results.hasOwnProperty('tokens')) {
 			uids.forEach(function(uid, index) {
-				if (!results.tokens[index] || !results.settings[index]) {
+				if (!results.tokens[uid] || !results.settings[index]) {
 					return;
 				}
-				if (parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
-					pushToUid(uid, notifObj, results.tokens[index][uid], results.settings[index]);
+				if (results.settings[index]['pushbullet:enabled'] === null || parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
+					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
 				}
 			});
 		}
