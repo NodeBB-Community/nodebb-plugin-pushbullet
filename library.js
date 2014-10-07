@@ -3,6 +3,8 @@
 var db = module.parent.require('./database'),
 	meta = module.parent.require('./meta'),
 	user = module.parent.require('./user'),
+	posts = module.parent.require('./posts'),
+	topics = module.parent.require('./topics'),
 	translator = module.parent.require('../public/src/translator'),
 	SocketPlugins = module.parent.require('./socket.io/plugins'),
 
@@ -145,16 +147,22 @@ function pushToUid(uid, notifObj, token, settings) {
 		},
 		function(lang, next) {
 			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
-			translator.translate(notifObj.bodyShort, lang, function(translated) {
-				next(undefined, S(translated).stripTags().s);
-			});
+			async.parallel({
+				title: function(next) {
+					translator.translate(notifObj.bodyShort, lang, function(translated) {
+						next(undefined, S(translated).stripTags().s);
+					});
+				},
+				postIndex: async.apply(posts.getPidIndex, notifObj.pid, uid),
+				topicSlug: async.apply(topics.getTopicField, notifObj.tid, 'slug')
+			}, next);
 		},
-		function(title, next) {
+		function(data, next) {
 			var	payload = {
 					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
 					type: 'link',
-					title: title,
-					url: nconf.get('url') + notifObj.path,
+					title: data.title,
+					url: nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
 					body: notifObj.bodyLong
 				};
 
