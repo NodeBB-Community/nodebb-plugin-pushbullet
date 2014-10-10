@@ -25,7 +25,7 @@ var db = module.parent.require('./database'),
 	Pushbullet = {};
 
 Pushbullet.init = function(app, middleware, controllers, callback) {
-	var pluginMiddleware = require('./middleware'),
+	var pluginMiddleware = require('./middleware')(middleware),
 		pluginControllers = require('./controllers');
 
 	// Admin setup routes
