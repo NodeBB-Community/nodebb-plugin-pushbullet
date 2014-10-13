@@ -147,6 +147,7 @@ function pushToUid(uid, notifObj, token, settings) {
 			Pushbullet.getUserLanguage(uid, next);
 		},
 		function(lang, next) {
+			notifObj.bodyLong = notifObj.bodyLong || notifObj.bodyShort || '';
 			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
 			async.parallel({
 				title: function(next) {
