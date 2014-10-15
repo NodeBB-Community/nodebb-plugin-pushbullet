@@ -51,7 +51,7 @@ Pushbullet.init = function(app, middleware, controllers, callback) {
 	});
 
 	// User language cache
-	db.sortedSetCard('users:postcount', function(err, numUsers) {
+	db.getObjectField('global', 'userCount', function(err, numUsers) {
 		var	cacheOpts = {
 				max: 50,
 				maxAge: 1000 * 60 * 60 * 24
