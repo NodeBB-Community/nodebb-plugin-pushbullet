@@ -82,6 +82,10 @@ Pushbullet.redirectSetup = function(req, res) {
 			response_type: 'code'
 		});
 
+	if (process.env.NODE_ENV === 'development') {
+		winston.info('[plugins/pushbullet] New association, redirecting user to: ' + constants.authorize_url + '?' + qs);
+	}
+
 	res.redirect(constants.authorize_url + '?' + qs);
 };
 
