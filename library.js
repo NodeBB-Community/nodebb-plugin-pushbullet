@@ -168,7 +168,7 @@ function pushToUid(uid, notifObj, token, settings) {
 					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
 					type: 'link',
 					title: data.title,
-					url: nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
+					url: notifObj.path || nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
 					body: notifObj.bodyLong
 				};
 
