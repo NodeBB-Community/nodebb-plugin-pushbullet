@@ -27,7 +27,14 @@ module.exports = function(middleware) {
 	};
 
 	Middleware.setupRequired = function(req, res, next) {
+		if (!req.user) {
+			res.locals.setupRequired = false;
+			return next();
+		}
 		Pushbullet.isUserAssociated(req.user.uid, function(err, assoc) {
+			if (err) {
+				return next(err);
+			}
 			res.locals.setupRequired = !assoc;
 			next();
 		});
