@@ -16,6 +16,5 @@
 	],
 	"scripts": [
 		"lib/client-settings.js"
-	],
-	"compatibility": "~0.5.1"
+	]
 }
