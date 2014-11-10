@@ -24,22 +24,22 @@ var db = module.parent.require('./database'),
 
 	Pushbullet = {};
 
-Pushbullet.init = function(app, middleware, controllers, callback) {
-	var pluginMiddleware = require('./middleware')(middleware),
+Pushbullet.init = function(data, callback) {
+	var pluginMiddleware = require('./middleware')(data.middleware),
 		pluginControllers = require('./controllers');
 
 	// Admin setup routes
-	app.get('/admin/plugins/pushbullet', middleware.admin.buildHeader, pluginControllers.renderACP);
-	app.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
+	data.app.get('/admin/plugins/pushbullet', data.middleware.admin.buildHeader, pluginControllers.renderACP);
+	data.app.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
 
 	// Pushbullet-facing routes
-	app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
-	app.get('/api/pushbullet/setup', function(req, res) {
+	data.app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
+	data.app.get('/api/pushbullet/setup', function(req, res) {
 		res.status(200).json({});
 	});
-	app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, middleware.buildHeader, pluginControllers.renderAuthSuccess);
-	app.get('/pushbullet/settings', middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
-	app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	data.app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, data.middleware.buildHeader, pluginControllers.renderAuthSuccess);
+	data.app.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	data.app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 
 	// Config set-up
 	db.getObject('settings:pushbullet', function(err, config) {
