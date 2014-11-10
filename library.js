@@ -29,17 +29,17 @@ Pushbullet.init = function(data, callback) {
 		pluginControllers = require('./controllers');
 
 	// Admin setup routes
-	data.app.get('/admin/plugins/pushbullet', data.middleware.admin.buildHeader, pluginControllers.renderACP);
-	data.app.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
+	data.router.get('/admin/plugins/pushbullet', data.middleware.admin.buildHeader, pluginControllers.renderACP);
+	data.router.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
 
 	// Pushbullet-facing routes
-	data.app.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
-	data.app.get('/api/pushbullet/setup', function(req, res) {
+	data.router.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
+	data.router.get('/api/pushbullet/setup', function(req, res) {
 		res.status(200).json({});
 	});
-	data.app.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, data.middleware.buildHeader, pluginControllers.renderAuthSuccess);
-	data.app.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
-	data.app.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	data.router.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, data.middleware.buildHeader, pluginControllers.renderAuthSuccess);
+	data.router.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	data.router.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 
 	// Config set-up
 	db.getObject('settings:pushbullet', function(err, config) {
