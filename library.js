@@ -15,6 +15,7 @@ var db = module.parent.require('./database'),
 	S = module.parent.require('string'),
 	querystring = require('querystring'),
 	cache = require('lru-cache'),
+	url = require('url'),
 	lang_cache,
 
 	constants = Object.freeze({
@@ -144,6 +145,14 @@ Pushbullet.push = function(data) {
 function pushToUid(uid, notifObj, token, settings) {
 	if (!token) {
 		return;
+	}
+
+	if (notifObj.hasOwnProperty('path')) {
+		var urlObj = url.parse(notifObj.path, false, true);
+		if (!urlObj.host && !urlObj.hostname) {
+			// This is a relative path
+			notifObj.path = url.resolve(nconf.get('url'), notifObj.path);
+		}
 	}
 
 	async.waterfall([
