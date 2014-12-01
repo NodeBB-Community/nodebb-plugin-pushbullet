@@ -39,7 +39,7 @@ Pushbullet.init = function(data, callback) {
 		res.status(200).json({});
 	});
 	data.router.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, data.middleware.buildHeader, pluginControllers.renderAuthSuccess);
-	data.router.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
+	data.router.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 	data.router.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
 
 	// Config set-up
