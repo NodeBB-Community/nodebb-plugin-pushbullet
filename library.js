@@ -70,7 +70,8 @@ Pushbullet.init = function(data, callback) {
 			save: Pushbullet.settings.save,
 			load: Pushbullet.settings.load
 		},
-		disassociate: Pushbullet.disassociate
+		disassociate: Pushbullet.disassociate,
+		test: Pushbullet.test
 	};
 
 	callback();
@@ -109,6 +110,22 @@ Pushbullet.disassociate = function(socket, data, callback) {
 	}
 };
 
+Pushbullet.test = function(socket, data, callback) {
+	if (socket.uid) {
+		Pushbullet.push({
+			notification: {
+				path: '/',
+				bodyShort: 'Test Notification',
+				bodyLong: 'If you have received this, then Pushbullet is now working!'
+			},
+			uids: [socket.uid]
+		});
+		callback();
+	} else {
+		callback(new Error('[[error:not-logged-in]]'));
+	}
+};
+
 Pushbullet.push = function(data) {
 	var notifObj = data.notification;
 	var uids = data.uids;
@@ -134,7 +151,7 @@ Pushbullet.push = function(data) {
 				if (!results.tokens[uid] || !results.settings[index]) {
 					return;
 				}
-				if (results.settings[index]['pushbullet:enabled'] === null || parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
+				if (results.settings[index]['pushbullet:enabled'] === null || results.settings[index]['pushbullet:enabled'] === 'true') {
 					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
 				}
 			});
@@ -143,6 +160,7 @@ Pushbullet.push = function(data) {
 };
 
 function pushToUid(uid, notifObj, token, settings) {
+	console.log(arguments);
 	if (!token) {
 		return;
 	}
@@ -181,6 +199,7 @@ function pushToUid(uid, notifObj, token, settings) {
 					body: notifObj.bodyLong
 				};
 
+			winston.verbose('[plugins/pushbullet] Sending push notification to uid ' + uid);
 			request.post(constants.push_url, {
 				form: payload,
 				auth: {

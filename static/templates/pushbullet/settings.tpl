@@ -32,6 +32,7 @@
 										</select>
 									</div>
 									<button type="button" class="btn btn-primary" id="save">Save Settings</button>
+									<button type="button" class="btn btn-link" id="test">Send Test Notification</button>
 								</form>
 							</div>
 						</div>
