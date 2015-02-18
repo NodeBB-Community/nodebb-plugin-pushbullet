@@ -151,7 +151,7 @@ Pushbullet.push = function(data) {
 				if (!results.tokens[uid] || !results.settings[index]) {
 					return;
 				}
-				if (results.settings[index]['pushbullet:enabled'] === null || results.settings[index]['pushbullet:enabled'] === 'true') {
+				if (results.settings[index]['pushbullet:enabled'] === null || parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
 					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
 				}
 			});
@@ -160,7 +160,6 @@ Pushbullet.push = function(data) {
 };
 
 function pushToUid(uid, notifObj, token, settings) {
-	console.log(arguments);
 	if (!token) {
 		return;
 	}

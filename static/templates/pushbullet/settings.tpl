@@ -19,12 +19,12 @@
 								<form role="form" class="form pushbullet-settings">
 									<div class="checkbox">
 										<label for="enabled">
-											<input id="enabled" type="checkbox" /> Enable Pushbullet Notifications
+											<input id="enabled" name="pushbullet:enabled" type="checkbox" /> Enable Pushbullet Notifications
 										</label>
 									</div>
 									<div class="form-group">
 										<label for="target">Send notifications only to this device</label>
-										<select class="form-control" id="target">
+										<select class="form-control" name="pushbullet:target" id="target">
 											<option value="">All associated devices</option>
 											<!-- BEGIN devices -->
 											<option value="{devices.iden}">{devices.name}</option>
