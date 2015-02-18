@@ -151,7 +151,7 @@ Pushbullet.push = function(data) {
 				if (!results.tokens[uid] || !results.settings[index]) {
 					return;
 				}
-				if (results.settings[index]['pushbullet:enabled'] === null || results.settings[index]['pushbullet:enabled'] === 'true') {
+				if (results.settings[index]['pushbullet:enabled'] === null || results.settings[index]['pushbullet:enabled'] === 'true' ||  results.settings[index]['pushbullet:enabled'] === true) {
 					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
 				}
 			});
