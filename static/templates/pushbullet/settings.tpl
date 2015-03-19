@@ -62,7 +62,7 @@
 				</p>
 
 				<p>
-					<a class="btn btn-lg btn-primary" href="{relative_path}/pushbullet/setup">Associate account with Pushbullet</a>
+					<a class="btn btn-lg btn-primary" target="_top" href="{relative_path}/pushbullet/setup">Associate account with Pushbullet</a>
 				</p>
 
 				<div class="store-buttons">
