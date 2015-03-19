@@ -168,7 +168,7 @@ function pushToUid(uid, notifObj, token, settings) {
 		var urlObj = url.parse(notifObj.path, false, true);
 		if (!urlObj.host && !urlObj.hostname) {
 			// This is a relative path
-			notifObj.path = url.resolve(nconf.get('url'), notifObj.path);
+			notifObj.path = url.resolve(nconf.get('url') + '/', notifObj.path);
 		}
 	}
 
@@ -177,7 +177,7 @@ function pushToUid(uid, notifObj, token, settings) {
 			Pushbullet.getUserLanguage(uid, next);
 		},
 		function(lang, next) {
-			notifObj.bodyLong = notifObj.bodyLong || notifObj.bodyShort || '';
+			notifObj.bodyLong = notifObj.bodyLong || '';
 			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
 			async.parallel({
 				title: function(next) {
