@@ -5,7 +5,7 @@ var db = module.parent.require('./database'),
 	user = module.parent.require('./user'),
 	posts = module.parent.require('./posts'),
 	topics = module.parent.require('./topics'),
-	translator = module.parent.require('../public/src/translator'),
+	translator = module.parent.require('../public/src/modules/translator'),
 	SocketPlugins = module.parent.require('./socket.io/plugins'),
 
 	winston = module.parent.require('winston'),
