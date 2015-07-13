@@ -9,8 +9,8 @@
 				</p>
 				<p>
 					<div class="btn-group">
-						<a href="{relative_path}/pushbullet/settings" class="btn btn-primary">Manage Pushbullet Settings</a>
-						<a href="{relative_path}/" class="btn btn-default">Back to Index</a>
+						<a href="{config.relative_path}/pushbullet/settings" class="btn btn-primary">Manage Pushbullet Settings</a>
+						<a href="{config.relative_path}/" class="btn btn-default">Back to Index</a>
 					</div>
 				</p>
 			</div>
