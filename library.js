@@ -114,7 +114,7 @@ Pushbullet.test = function(socket, data, callback) {
 	if (socket.uid) {
 		Pushbullet.push({
 			notification: {
-				path: '/',
+				path: nconf.get('relative_path') + '/',
 				bodyShort: 'Test Notification',
 				bodyLong: 'If you have received this, then Pushbullet is now working!'
 			},
@@ -180,7 +180,8 @@ function pushToUid(uid, notifObj, token, settings) {
 			notifObj.bodyLong = notifObj.bodyLong || '';
 			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
 			async.parallel({
-				title: function(next) {
+				title: async.apply(topics.getTopicFieldByPid, 'title', notifObj.pid),
+				text: function(next) {
 					translator.translate(notifObj.bodyShort, lang, function(translated) {
 						next(undefined, S(translated).stripTags().s);
 					});
@@ -193,9 +194,9 @@ function pushToUid(uid, notifObj, token, settings) {
 			var	payload = {
 					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
 					type: 'link',
-					title: data.title,
+					title: data.title || data.text,
 					url: notifObj.path || nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
-					body: notifObj.bodyLong
+					body: data.title ? data.text : notifObj.bodyLong
 				};
 
 			winston.verbose('[plugins/pushbullet] Sending push notification to uid ' + uid);
