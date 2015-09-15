@@ -1,6 +1,6 @@
 {
   "name": "nodebb-plugin-pushbullet",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Allows NodeBB to interface with the Pushbullet service in order to provide push notifications to user mobile phones",
   "main": "library.js",
   "repository": {
