@@ -140,7 +140,7 @@ Pushbullet.push = function(data) {
 
 	async.parallel({
 		tokens: async.apply(db.getObjectFields, 'pushbullet:tokens', uids),
-		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target'])
+		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort'])
 	}, function(err, results) {
 		if (err) {
 			return winston.error(err.stack);
@@ -184,9 +184,16 @@ function pushToUid(uid, notifObj, token, settings) {
 				text: function(next) {
 					translator.translate(notifObj.bodyShort, lang, function(translated) {
 						next(undefined, S(translated).stripTags().s);
-					});
+			 		});
 				},
-				postIndex: async.apply(posts.getPidIndex, notifObj.pid, uid),
+				postIndex: function(next) {
+					posts.getPostField(notifObj.pid, 'tid', function(err, tid) {
+						if (err) {
+							return next(err);
+						}	
+						posts.getPidIndex(notifObj.pid, tid, settings.topicPostSort || 'oldest_to_newest', next);
+					});					
+				},				
 				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
 			}, next);
 		},
