@@ -16,7 +16,6 @@ var db = module.parent.require('./database'),
 	querystring = require('querystring'),
 	cache = require('lru-cache'),
 	url = require('url'),
-	lang_cache,
 
 	constants = Object.freeze({
 		authorize_url: 'https://www.pushbullet.com/authorize',
@@ -49,19 +48,6 @@ Pushbullet.init = function(data, callback) {
 		} else {
 			winston.info('[plugins/pushbullet] Please complete setup at `/admin/pushbullet`');
 		}
-	});
-
-	// User language cache
-	db.getObjectField('global', 'userCount', function(err, numUsers) {
-		var	cacheOpts = {
-				max: 50,
-				maxAge: 1000 * 60 * 60 * 24
-			};
-
-		if (!err && numUsers > 0) {
-			cacheOpts.max = Math.floor(numUsers / 20);
-		}
-		lang_cache = cache(cacheOpts);
 	});
 
 	// WebSocket listeners
@@ -140,7 +126,7 @@ Pushbullet.push = function(data) {
 
 	async.parallel({
 		tokens: async.apply(db.getObjectFields, 'pushbullet:tokens', uids),
-		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort'])
+		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort', 'language'])
 	}, function(err, results) {
 		if (err) {
 			return winston.error(err.stack);
@@ -174,15 +160,15 @@ function pushToUid(uid, notifObj, token, settings) {
 
 	async.waterfall([
 		function(next) {
-			Pushbullet.getUserLanguage(uid, next);
-		},
-		function(lang, next) {
+			var language = settings.language || meta.config.defaultLang || 'en_GB',
+				topicPostSort = settings.topicPostSort || meta.config.topicPostSort || 'oldest_to_newest';
+
 			notifObj.bodyLong = notifObj.bodyLong || '';
 			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
 			async.parallel({
 				title: async.apply(topics.getTopicFieldByPid, 'title', notifObj.pid),
 				text: function(next) {
-					translator.translate(notifObj.bodyShort, lang, function(translated) {
+					translator.translate(notifObj.bodyShort, language, function(translated) {
 						next(undefined, S(translated).stripTags().s);
 			 		});
 				},
@@ -191,7 +177,7 @@ function pushToUid(uid, notifObj, token, settings) {
 						if (err) {
 							return next(err);
 						}	
-						posts.getPidIndex(notifObj.pid, tid, settings.topicPostSort || 'oldest_to_newest', next);
+						posts.getPidIndex(notifObj.pid, tid, topicPostSort, next);
 					});					
 				},				
 				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
@@ -284,18 +270,6 @@ Pushbullet.retrieveToken = function(code, callback) {
 
 Pushbullet.saveToken = function(uid, token, callback) {
 	db.setObjectField('pushbullet:tokens', uid, token, callback);
-};
-
-Pushbullet.getUserLanguage = function(uid, callback) {
-	if (lang_cache.has(uid)) {
-		callback(null, lang_cache.get(uid));
-	} else {
-		user.getSettings(uid, function(err, settings) {
-			var language = settings.language || meta.config.defaultLang || 'en_GB';
-			callback(null, language);
-			lang_cache.set(uid, language);
-		});
-	}
 };
 
 Pushbullet.getUserDevices = function(uid, callback) {
