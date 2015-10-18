@@ -14,6 +14,7 @@ var db = module.parent.require('./database'),
 	request = module.parent.require('request'),
 	S = module.parent.require('string'),
 	querystring = require('querystring'),
+	path = require('path'),
 	cache = require('lru-cache'),
 	url = require('url'),
 
@@ -66,7 +67,7 @@ Pushbullet.init = function(data, callback) {
 Pushbullet.redirectSetup = function(req, res) {
 	var qs = querystring.stringify({
 			client_id: Pushbullet.config.id,
-			redirect_uri: encodeURIComponent(nconf.get('url') + '/pushbullet/auth'),
+			redirect_uri: path.join(nconf.get('url'), 'pushbullet/auth'),
 			response_type: 'code'
 		});
 
