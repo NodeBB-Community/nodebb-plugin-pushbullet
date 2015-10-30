@@ -67,7 +67,7 @@ Pushbullet.init = function(data, callback) {
 Pushbullet.redirectSetup = function(req, res) {
 	var qs = querystring.stringify({
 			client_id: Pushbullet.config.id,
-			redirect_uri: path.join(nconf.get('url'), 'pushbullet/auth'),
+			redirect_uri: url.resolve(nconf.get('url'), '/pushbullet/auth'),
 			response_type: 'code'
 		});
 
