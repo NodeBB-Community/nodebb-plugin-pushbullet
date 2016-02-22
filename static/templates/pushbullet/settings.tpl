@@ -3,7 +3,7 @@
 		<!-- IF !setupRequired -->
 		<div class="panel panel-success">
 			<div class="panel-body">
-				<img class="pull-right" src="//www.pushbullet.com/img/header-logo.png" />
+				<img class="pb-logo pull-right" src="https://www.pushbullet.com/img/header/logo.png" />
 				<h1>Pushbullet Notification Settings</h1>
 				<p class="lead">
 					Customise your Pushbullet integration with <strong>{site_title}</strong> here.
@@ -56,7 +56,7 @@
 		<!-- ELSE -->
 		<div class="panel panel-default">
 			<div class="panel-body text-center">
-				<img src="//www.pushbullet.com/img/header-logo.png" />
+				<img class="pb-logo" src="https://www.pushbullet.com/img/header/logo.png" />
 				<p class="lead">
 					This account is not currently associated with a Pushbullet account.
 				</p>

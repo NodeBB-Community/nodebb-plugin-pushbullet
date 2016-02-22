@@ -2,7 +2,7 @@
 	<div class="col-xs-12">
 		<div class="panel panel-success">
 			<div class="panel-body">
-				<img class="pull-right" src="//www.pushbullet.com/img/header-logo.png" />
+				<img class="pb-logo pull-right" src="https://www.pushbullet.com/img/header/logo.png" />
 				<h1>Your account is now associated with Pushbullet!</h1>
 				<p>
 					Congratulations! You should now be able to receive notifications to all associated Pushbullet devices.
