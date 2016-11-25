@@ -12,7 +12,7 @@
 					<li>
 						<a href="https://www.pushbullet.com/#settings/clients">Register an application via the Pushbullet website</a>, and obtain a client key and secret.<br />
 						<p class="help-block">
-							In particular, the <code>redirect_uri</code> should be your forum's URL with <code>/pushbullet/auth</code> appended to it (e.g. <code>{url}/pushbullet/auth</code>)
+							In particular, the <code>redirect_uri</code> should be your forum's URL with <code>/pushbullet/auth</code> appended to it (e.g. <code>{base_url}/pushbullet/auth</code>)
 						</p>
 					</li>
 					<li>Enter the client key and secret into the configuration block below, and save.</li>

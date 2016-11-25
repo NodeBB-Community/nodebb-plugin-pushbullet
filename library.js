@@ -161,7 +161,7 @@ function pushToUid(uid, notifObj, token, settings) {
 
 	async.waterfall([
 		function(next) {
-			var language = settings.language || meta.config.defaultLang || 'en_GB',
+			var language = settings.language || meta.config.defaultLang || 'en-GB',
 				topicPostSort = settings.topicPostSort || meta.config.topicPostSort || 'oldest_to_newest';
 
 			notifObj.bodyLong = notifObj.bodyLong || '';

@@ -9,7 +9,7 @@ Controllers.renderACP = function(req, res) {
 		res.render('admin/plugins/pushbullet', {
 			users: users,
 			numAssoc: users.length,
-			url: nconf.get('url')
+			base_url: nconf.get('url').replace(/\/+$/, '')
 		});
 	});
 };
