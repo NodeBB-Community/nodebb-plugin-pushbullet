@@ -232,9 +232,9 @@ Pushbullet.addMenuItem = function(custom_header, callback) {
 	callback(null, custom_header);
 };
 
-Pushbullet.addProfileItem = function(links, callback) {
+Pushbullet.addProfileItem = function(data, callback) {
 	if (Pushbullet.config && Pushbullet.config.id && Pushbullet.config.secret) {
-		links.push({
+		data.links.push({
 			id: 'pushbullet',
 			route: '../../pushbullet/settings',
 			icon: 'fa-mobile',
@@ -243,7 +243,7 @@ Pushbullet.addProfileItem = function(links, callback) {
 		});
 	}
 
-	callback(null, links);
+	callback(null, data);
 };
 
 Pushbullet.retrieveToken = function(code, callback) {
