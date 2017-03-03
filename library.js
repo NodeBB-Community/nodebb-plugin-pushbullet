@@ -7,6 +7,7 @@ var db = module.parent.require('./database'),
 	topics = module.parent.require('./topics'),
 	translator = module.parent.require('../public/src/modules/translator'),
 	SocketPlugins = module.parent.require('./socket.io/plugins'),
+	globalMiddleware = module.parent.require('./middleware'),
 
 	winston = module.parent.require('winston'),
 	nconf = module.parent.require('nconf'),
@@ -19,91 +20,87 @@ var db = module.parent.require('./database'),
 	url = require('url'),
 
 	constants = Object.freeze({
-		authorize_url: 'https://www.pushbullet.com/authorize',
-		push_url: 'https://api.pushbullet.com/v2/pushes'
+		authorize_url: 'https://www.onesignal.com/authorize',
+		push_url: 'https://onesignal.com/api/v1/notifications'
 	}),
 
-	Pushbullet = {};
+	onesignal = {};
 
-Pushbullet.init = function(data, callback) {
+onesignal.init = function(data, callback) {
 	var pluginMiddleware = require('./middleware')(data.middleware),
 		pluginControllers = require('./controllers');
 
 	// Admin setup routes
-	data.router.get('/admin/plugins/pushbullet', data.middleware.admin.buildHeader, pluginControllers.renderACP);
-	data.router.get('/api/admin/plugins/pushbullet', pluginControllers.renderACP);
+	data.router.get('/admin/plugins/onesignal', data.middleware.admin.buildHeader, pluginControllers.renderACP);
+	data.router.get('/api/admin/plugins/onesignal', pluginControllers.renderACP);
 
-	// Pushbullet-facing routes
-	data.router.get('/pushbullet/setup', pluginMiddleware.hasConfig, Pushbullet.redirectSetup);
-	data.router.get('/api/pushbullet/setup', function(req, res) {
-		res.status(200).json({});
-	});
-	data.router.get('/pushbullet/auth', pluginMiddleware.hasConfig, pluginMiddleware.hasCode, pluginMiddleware.isLoggedIn, Pushbullet.completeSetup, data.middleware.buildHeader, pluginControllers.renderAuthSuccess);
-	data.router.get('/pushbullet/settings', data.middleware.buildHeader, pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
-	data.router.get('/api/pushbullet/settings', pluginMiddleware.isLoggedIn, pluginMiddleware.setupRequired, pluginControllers.renderSettings);
-
+	// User routes
+	data.router.get('/onesignal/settings', pluginMiddleware.hasConfig, globalMiddleware.authenticate,pluginMiddleware.setupRequired, data.middleware.buildHeader, pluginControllers.renderSettings);
+	data.router.get('/api/me/onesignal/devices', globalMiddleware.authenticate, pluginMiddleware.isLoggedIn, pluginControllers.getPlayerIds);
+    data.router.post('/api/me/onesignal/devices', globalMiddleware.authenticate, pluginMiddleware.isLoggedIn, pluginMiddleware.addDevice, pluginControllers.getPlayerIds);
+	
 	// Config set-up
-	db.getObject('settings:pushbullet', function(err, config) {
+	db.getObject('settings:onesignal', function(err, config) {
 		if (!err && config) {
-			Pushbullet.config = config;
+			onesignal.config = config;
 		} else {
-			winston.info('[plugins/pushbullet] Please complete setup at `/admin/pushbullet`');
+			winston.info('[plugins/onesignal] Please complete setup at `/admin/onesignal`');
 		}
 	});
 
 	// WebSocket listeners
-	SocketPlugins.pushbullet = {
+	SocketPlugins.onesignal = {
 		settings: {
-			save: Pushbullet.settings.save,
-			load: Pushbullet.settings.load
+			save: onesignal.settings.save,
+			load: onesignal.settings.load
 		},
-		disassociate: Pushbullet.disassociate,
-		test: Pushbullet.test
+		disassociate: onesignal.disassociate,
+		test: onesignal.test
 	};
 
 	callback();
 };
 
-Pushbullet.redirectSetup = function(req, res) {
+onesignal.redirectSetup = function(req, res) {
 	var qs = querystring.stringify({
-			client_id: Pushbullet.config.id,
-			redirect_uri: url.resolve(nconf.get('url'), '/pushbullet/auth'),
+			client_id: onesignal.config.id,
+			redirect_uri: url.resolve(nconf.get('url'), '/onesignal/auth'),
 			response_type: 'code'
 		});
 
 	if (process.env.NODE_ENV === 'development') {
-		winston.info('[plugins/pushbullet] New association, redirecting user to: ' + constants.authorize_url + '?' + qs);
+		winston.info('[plugins/onesignal] New association, redirecting user to: ' + constants.authorize_url + '?' + qs);
 	}
 
 	res.redirect(constants.authorize_url + '?' + qs);
 };
 
-Pushbullet.completeSetup = function(req, res, next) {
+onesignal.completeSetup = function(req, res, next) {
 	async.waterfall([
 		function(next) {
-			Pushbullet.retrieveToken(req.query.code, next);
+			onesignal.retrieveToken(req.query.code, next);
 		},
 		function(token, next) {
-			Pushbullet.saveToken(req.user.uid, token, next);
+			onesignal.saveToken(req.user.uid, token, next);
 		}
 	], next);
 };
 
-Pushbullet.disassociate = function(socket, data, callback) {
+onesignal.disassociate = function(socket, data, callback) {
 	if (socket.uid) {
-		db.deleteObjectField('pushbullet:tokens', socket.uid, callback);
+		db.deleteObjectField('users:onesignal:players', socket.uid, callback);
 	} else {
 		callback(new Error('[[error:not-logged-in]]'));
 	}
 };
 
-Pushbullet.test = function(socket, data, callback) {
+onesignal.test = function(socket, data, callback) {
 	if (socket.uid) {
-		Pushbullet.push({
+		onesignal.push({
 			notification: {
 				path: nconf.get('relative_path') + '/',
 				bodyShort: 'Test Notification',
-				bodyLong: 'If you have received this, then Pushbullet is now working!'
+				bodyLong: 'If you have received this, then OneSignal is now working!'
 			},
 			uids: [socket.uid]
 		});
@@ -113,7 +110,7 @@ Pushbullet.test = function(socket, data, callback) {
 	}
 };
 
-Pushbullet.push = function(data) {
+onesignal.push = function(data) {
 	var notifObj = data.notification;
 	var uids = data.uids;
 
@@ -126,28 +123,29 @@ Pushbullet.push = function(data) {
 	});
 
 	async.parallel({
-		tokens: async.apply(db.getObjectFields, 'pushbullet:tokens', uids),
-		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort', 'language'])
+		players: async.apply(db.getObjectFields, 'users:onesignal:players', uids),
+		settings: async.apply(db.getObjectsFields, settingsKeys, ['onesignal:enabled', 'topicPostSort', 'language']),
+		app_id: async.apply(db.getObjectField,'settings:onesignal', 'id')
 	}, function(err, results) {
 		if (err) {
 			return winston.error(err.stack);
 		}
 
-		if (results.hasOwnProperty('tokens')) {
+		if (results.hasOwnProperty('players')) {
 			uids.forEach(function(uid, index) {
-				if (!results.tokens[uid] || !results.settings[index]) {
+				if (!results.players[uid] || !results.settings[index]) {
 					return;
 				}
-				if (results.settings[index]['pushbullet:enabled'] === null || parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
-					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
+				if (results.settings[index]['onesignal:enabled'] === null || parseInt(results.settings[index]['onesignal:enabled'], 10) === 1) {
+					pushToUid(uid, notifObj, results.players[uid], results.settings[index], results.app_id);
 				}
 			});
 		}
 	});
 };
 
-function pushToUid(uid, notifObj, token, settings) {
-	if (!token) {
+function pushToUid(uid, notifObj, players, settings, app_id) {
+	if (!players) {
 		return;
 	}
 
@@ -177,44 +175,37 @@ function pushToUid(uid, notifObj, token, settings) {
 					posts.getPostField(notifObj.pid, 'tid', function(err, tid) {
 						if (err) {
 							return next(err);
-						}	
+						}
 						posts.getPidIndex(notifObj.pid, tid, topicPostSort, next);
-					});					
-				},				
+					});
+				},
 				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
 			}, next);
 		},
 		function(data, next) {
 			var	payload = {
-					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
-					type: 'link',
-					title: data.title || data.text,
+					app_id: app_id,
+					headings: {'en' : data.title ? data.title : ""} ,
+					contents: {'en': data.text },
+                	include_player_ids: JSON.parse(players),
 					url: notifObj.path || nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
-					body: data.title ? data.text : notifObj.bodyLong
 				};
 
-			winston.verbose('[plugins/pushbullet] Sending push notification to uid ' + uid);
+			winston.verbose('[plugins/onesignal] Sending push notification to uid ' + uid);
 			request.post(constants.push_url, {
-				form: payload,
-				auth: {
-					user: token
-				}
+				json: payload
 			}, function(err, request, result) {
 				if (err) {
-					winston.error('[plugins/pushbullet] ' + err.message);
-				} else if (result.length) {
+					winston.error('[plugins/onesignal] ' + err.message);
+				} else if (result) {
 					try {
-						result = JSON.parse(result);
-						if (result.hasOwnProperty('error') && result.error.type === 'invalid_user') {
-							winston.info('[plugins/pushbullet] uid ' + uid + ' has disassociated, removing token.');
-							Pushbullet.disassociate({
-								uid: uid
-							});
-						} else if (result.hasOwnProperty('error')) {
-							winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
+						if (result.hasOwnProperty('errors')) {
+                            result.errors.forEach(function(err){
+                                winston.error('[plugins/onesignal] ' + err);
+                            });
 						}
 					} catch (e) {
-						winston.error('[plugins/pushbullet] ' + e);
+						winston.error('[plugins/onesignal] ' + e);
 					}
 				}
 			});
@@ -222,23 +213,23 @@ function pushToUid(uid, notifObj, token, settings) {
 	]);
 }
 
-Pushbullet.addMenuItem = function(custom_header, callback) {
+onesignal.addMenuItem = function(custom_header, callback) {
 	custom_header.plugins.push({
-		"route": '/plugins/pushbullet',
+		"route": '/plugins/onesignal',
 		"icon": 'fa-mobile',
-		"name": 'Pushbullet'
+		"name": 'OneSignal'
 	});
 
 	callback(null, custom_header);
 };
 
-Pushbullet.addProfileItem = function(data, callback) {
-	if (Pushbullet.config && Pushbullet.config.id && Pushbullet.config.secret) {
+onesignal.addProfileItem = function(data, callback) {
+	if (onesignal.config && onesignal.config.id && onesignal.config.secret) {
 		data.links.push({
-			id: 'pushbullet',
-			route: '../../pushbullet/settings',
+			id: 'onesignal',
+			route: '../../onesignal/settings',
 			icon: 'fa-mobile',
-			name: 'Pushbullet',
+			name: 'OneSignal',
 			public: false
 		});
 	}
@@ -246,75 +237,49 @@ Pushbullet.addProfileItem = function(data, callback) {
 	callback(null, data);
 };
 
-Pushbullet.retrieveToken = function(code, callback) {
-	request.post('https://api.pushbullet.com/oauth2/token', {
-		form: {
-			grant_type: 'authorization_code',
-			client_id: Pushbullet.config.id,
-			client_secret: Pushbullet.config.secret,
-			code: code
-		}
-	}, function(err, request, response) {
-		if (!err && response.length) {
-			try {
-				response = JSON.parse(response);
-				callback(undefined, response.access_token);
-			} catch (err) {
-				callback(err);
+onesignal.savePlayerId = function(uid, playerId, callback) {
+
+	async.waterfall([
+		function(next){
+        	db.isObjectField('users:onesignal:players', uid, next);
+		},
+		function(exists, next){
+			if(exists){
+                onesignal.getPlayerIds(uid,next);
+			}else{
+				next(null,JSON.stringify([]));
 			}
-
-		} else {
-			callback(err || new Error(response.error.type));
-		}
-	});
+		},
+		function(playersData, next){
+			var players = new Set(JSON.parse(playersData));
+			players.add(playerId);
+			db.setObjectField('users:onesignal:players', uid,JSON.stringify([...players]),next);
+		}],
+		callback);
 };
 
-Pushbullet.saveToken = function(uid, token, callback) {
-	db.setObjectField('pushbullet:tokens', uid, token, callback);
+onesignal.getPlayerIds = function(uid, callback) {
+    db.getObjectField('users:onesignal:players', uid, callback);
 };
 
-Pushbullet.getUserDevices = function(uid, callback) {
+onesignal.getUserDevices = function(uid, callback) {
 	async.parallel({
-		token: async.apply(db.getObjectField, 'pushbullet:tokens', uid),
-		target: async.apply(db.getObjectField, 'user:' + uid + ':settings', 'pushbullet:target')
+		players: async.apply(db.getObjectField, 'users:onesignal:players', uid)
 	}, function(err, results) {
-		if (results.token) {
-			request.get('https://api.pushbullet.com/v2/devices', {
-				auth: {
-					user: results.token
-				}
-			}, function(err, request, response) {
-				if (!err && request.statusCode === 200) {
-					try {
-						response = JSON.parse(response);
-
-						var devices = response.devices.map(function(device) {
-								return {
-									iden: device.iden,
-									name: device.nickname || device.model
-								};
-							});
-
-						callback(null, devices);
-					} catch(e) {
-						callback(null, []);
-					}
-				} else {
-					callback(null, []);
-				}
-			});
+		if (results.players) {
+			callback(null, JSON.parse(results.players));
 		} else {
 			callback(null, []);
 		}
 	});
 };
 
-Pushbullet.isUserAssociated = function(uid, callback) {
-	db.isObjectField('pushbullet:tokens', uid, callback);
+onesignal.isUserAssociated = function(uid, callback) {
+	db.isObjectField('users:onesignal:players', uid, callback);
 };
 
-Pushbullet.getAssociatedUsers = function(callback) {
-	db.getObjectKeys('pushbullet:tokens', function(err, uids) {
+onesignal.getAssociatedUsers = function(callback) {
+	db.getObjectKeys('users:onesignal:players', function(err, uids) {
 		if (!err) {
 			user.getMultipleUserFields(uids, ['username', 'picture'], callback);
 		} else {
@@ -324,9 +289,9 @@ Pushbullet.getAssociatedUsers = function(callback) {
 };
 
 /* Settings */
-Pushbullet.settings = {};
+onesignal.settings = {};
 
-Pushbullet.settings.save = function(socket, data, callback) {
+onesignal.settings.save = function(socket, data, callback) {
 	if (socket.hasOwnProperty('uid') && socket.uid > 0) {
 		db.setObject('user:' + socket.uid + ':settings', data, callback);
 	} else {
@@ -334,12 +299,12 @@ Pushbullet.settings.save = function(socket, data, callback) {
 	}
 };
 
-Pushbullet.settings.load = function(socket, data, callback) {
+onesignal.settings.load = function(socket, data, callback) {
 	if (socket.hasOwnProperty('uid') && socket.uid > 0) {
-		db.getObjectFields('user:' + socket.uid + ':settings', ['pushbullet:enabled', 'pushbullet:target'], callback);
+		db.getObjectFields('user:' + socket.uid + ':settings', ['onesignal:enabled', 'onesignal:target'], callback);
 	} else {
 		callback(new Error('not-logged-in'));
 	}
 };
 
-module.exports = Pushbullet;
+module.exports = onesignal;

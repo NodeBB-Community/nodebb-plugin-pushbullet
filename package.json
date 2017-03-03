@@ -1,25 +1,24 @@
 {
-  "name": "nodebb-plugin-pushbullet",
-  "version": "4.1.0",
-  "description": "Allows NodeBB to interface with the Pushbullet service in order to provide push notifications to user mobile phones",
+  "name": "nodebb-plugin-onesignal",
+  "version": "0.1.0",
+  "description": "Allows NodeBB to interface with the OneSignal service in order to provide push notifications to OneSignal applications and devices",
   "main": "library.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nodebb/nodebb-plugin-pushbullet"
+    "url": "https://github.com/CCob/nodebb-plugin-onesignal"
   },
   "keywords": [
     "nodebb",
     "plugin",
-    "pushbullet",
+    "onesignal",
     "push notifications"
   ],
   "author": {
-    "name": "julianlam",
-    "email": "julian@nodebb.org"
+    "name": "CCob"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nodebb/nodebb-plugin-pushbullet/issues"
+    "url": "https://github.com/CCob/nodebb-plugin-onesignal/issues"
   },
   "readmeFilename": "README.md",
   "dependencies": {
