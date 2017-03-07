@@ -253,7 +253,7 @@ onesignal.savePlayerId = function(uid, playerId, callback) {
 		function(playersData, next){
 			var players = new Set(JSON.parse(playersData));
 			players.add(playerId);
-			db.setObjectField('users:onesignal:players', uid,JSON.stringify([...players]),next);
+			db.setObjectField('users:onesignal:players', uid,JSON.stringify(Array.from(players)),next);
 		}],
 		callback);
 };
@@ -281,7 +281,7 @@ onesignal.isUserAssociated = function(uid, callback) {
 onesignal.getAssociatedUsers = function(callback) {
 	db.getObjectKeys('users:onesignal:players', function(err, uids) {
 		if (!err) {
-			user.getMultipleUserFields(uids, ['username', 'picture'], callback);
+			user.getUsersFields(uids, ['username', 'picture'], callback);
 		} else {
 			callback(err);
 		}
