@@ -239,7 +239,13 @@ Pushbullet.addProfileItem = function(data, callback) {
 			route: '../../pushbullet/settings',
 			icon: 'fa-mobile',
 			name: 'Pushbullet',
-			public: false
+			visibility: {
+				self: true,
+				other: false,
+				moderator: false,
+				globalMod: false,
+				admin: false,
+			}
 		});
 	}
 
