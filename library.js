@@ -155,6 +155,9 @@ function pushToUid(uid, notifObj, token, settings) {
 		var urlObj = url.parse(notifObj.path, false, true);
 		if (!urlObj.host && !urlObj.hostname) {
 			// This is a relative path
+			if (notifObj.path.startsWith('/')) {
+				notifObj.path = notifObj.path.slice(1);
+			}
 			notifObj.path = url.resolve(nconf.get('url') + '/', notifObj.path);
 		}
 	}
