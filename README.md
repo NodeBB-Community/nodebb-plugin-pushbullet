@@ -1,3 +1,7 @@
+# This plugin is in maintenance mode
+
+As Pushbullet's free tier is no longer able to be used by power users, and as the various apps don't seem to be updated as frequently, we've stopped actively developing this plugin for the time being.
+
 # Pushbullet Notifications
 
 Allows NodeBB to interface with the Pushbullet service in order to provide push notifications to user mobile phones.
