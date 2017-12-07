@@ -12,8 +12,10 @@ var db = module.parent.require('./database'),
 	nconf = module.parent.require('nconf'),
 	async = module.parent.require('async'),
 	request = module.parent.require('request'),
-	S = module.parent.require('string'),
 	querystring = require('querystring'),
+	striptags = require('striptags'),
+	escapeHtml = require('escape-html'),
+	unescapeHtml = require('unescape-html'),
 	path = require('path'),
 	cache = require('lru-cache'),
 	url = require('url'),
@@ -167,23 +169,22 @@ function pushToUid(uid, notifObj, token, settings) {
 			var language = settings.language || meta.config.defaultLang || 'en-GB',
 				topicPostSort = settings.topicPostSort || meta.config.topicPostSort || 'oldest_to_newest';
 
-			notifObj.bodyLong = notifObj.bodyLong || '';
-			notifObj.bodyLong = S(notifObj.bodyLong).unescapeHTML().stripTags().unescapeHTML().s;
+			notifObj.bodyLong = escapeHtml(striptags(unescapeHtml(notifObj.bodyLong || '')));
 			async.parallel({
 				title: async.apply(topics.getTopicFieldByPid, 'title', notifObj.pid),
 				text: function(next) {
 					translator.translate(notifObj.bodyShort, language, function(translated) {
-						next(undefined, S(translated).stripTags().s);
+						next(undefined, striptags(translated));
 			 		});
 				},
 				postIndex: function(next) {
 					posts.getPostField(notifObj.pid, 'tid', function(err, tid) {
 						if (err) {
 							return next(err);
-						}	
+						}
 						posts.getPidIndex(notifObj.pid, tid, topicPostSort, next);
-					});					
-				},				
+					});
+				},
 				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
 			}, next);
 		},
