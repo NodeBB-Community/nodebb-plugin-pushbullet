@@ -215,10 +215,10 @@ function pushToUid(uid, notifObj, token, settings) {
 								uid: uid
 							});
 						} else if (result.hasOwnProperty('error')) {
-							winston.error('[plugins/pushbullet] ' + result.error.message + ' (' + result.error.type + ')');
+							winston.error('[plugins/pushbullet (uid: ' + uid  + ')] ' + result.error.message + ' (' + result.error.type + ')');
 						}
 					} catch (e) {
-						winston.error('[plugins/pushbullet] ' + e);
+						winston.error('[plugins/pushbullet (uid: ' + uid  + ')] ' + e);
 					}
 				}
 			});
