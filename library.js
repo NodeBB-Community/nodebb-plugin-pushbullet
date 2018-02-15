@@ -197,7 +197,7 @@ function pushToUid(uid, notifObj, token, settings) {
 					body: data.title ? data.text : notifObj.bodyLong
 				};
 
-			winston.verbose('[plugins/pushbullet] Sending push notification to uid ' + uid);
+			winston.verbose('[plugins/pushbullet (uid: ' + uid  + ')] Sending push notification to uid ' + uid);
 			request.post(constants.push_url, {
 				form: payload,
 				auth: {
