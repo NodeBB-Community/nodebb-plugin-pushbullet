@@ -230,7 +230,7 @@ onesignal.addProfileItem = function(data, callback) {
 			route: '../../onesignal/settings',
 			icon: 'fa-mobile',
 			name: 'OneSignal',
-			public: false
+			visibility: false
 		});
 	}
 
