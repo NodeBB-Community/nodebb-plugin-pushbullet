@@ -1,31 +1,30 @@
 "use strict";
 
-var db = module.parent.require('./database'),
-	meta = module.parent.require('./meta'),
-	user = module.parent.require('./user'),
-	posts = module.parent.require('./posts'),
-	topics = module.parent.require('./topics'),
-	translator = module.parent.require('../public/src/modules/translator'),
-	SocketPlugins = module.parent.require('./socket.io/plugins'),
+const url = require('url');
+const querystring = require('querystring');
+const striptags = require('striptags');
+const escapeHtml = require('escape-html');
+const unescapeHtml = require('unescape-html');
 
-	winston = module.parent.require('winston'),
-	nconf = module.parent.require('nconf'),
-	async = module.parent.require('async'),
-	request = module.parent.require('request'),
-	querystring = require('querystring'),
-	striptags = require('striptags'),
-	escapeHtml = require('escape-html'),
-	unescapeHtml = require('unescape-html'),
-	path = require('path'),
-	cache = require('lru-cache'),
-	url = require('url'),
+const winston = require.main.require('winston');
+const nconf = require.main.require('nconf');
+const async = require.main.require('async');
+const request = require.main.require('request');
 
-	constants = Object.freeze({
-		authorize_url: 'https://www.pushbullet.com/authorize',
-		push_url: 'https://api.pushbullet.com/v2/pushes'
-	}),
+const db = require.main.require('./src/database');
+const meta = require.main.require('./src/meta');
+const user = require.main.require('./src/user');
+const posts = require.main.require('./src/posts');
+const topics = require.main.require('./src/topics');
+const translator = require.main.require('./src/translator');
+const SocketPlugins = require.main.require('./src/socket.io/plugins');
 
-	Pushbullet = {};
+const constants = Object.freeze({
+	authorize_url: 'https://www.pushbullet.com/authorize',
+	push_url: 'https://api.pushbullet.com/v2/pushes'
+});
+
+const Pushbullet = module.exports;
 
 Pushbullet.init = function(data, callback) {
 	var pluginMiddleware = require('./middleware')(data.middleware),
@@ -177,15 +176,6 @@ function pushToUid(uid, notifObj, token, settings) {
 						next(undefined, striptags(translated));
 			 		});
 				},
-				postIndex: function(next) {
-					posts.getPostField(notifObj.pid, 'tid', function(err, tid) {
-						if (err) {
-							return next(err);
-						}
-						posts.getPidIndex(notifObj.pid, tid, topicPostSort, next);
-					});
-				},
-				topicSlug: async.apply(topics.getTopicFieldByPid, 'slug', notifObj.pid)
 			}, next);
 		},
 		function(data, next) {
@@ -193,7 +183,7 @@ function pushToUid(uid, notifObj, token, settings) {
 					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
 					type: 'link',
 					title: data.title || data.text,
-					url: notifObj.path || nconf.get('url') + '/topic/' + data.topicSlug + '/' + data.postIndex,
+					url: notifObj.path || nconf.get('url') + '/post/' + notifObj.pid,
 					body: data.title ? data.text : notifObj.bodyLong
 				};
 
@@ -351,5 +341,3 @@ Pushbullet.settings.load = function(socket, data, callback) {
 		callback(new Error('not-logged-in'));
 	}
 };
-
-module.exports = Pushbullet;
