@@ -114,44 +114,39 @@ Pushbullet.test = function(socket, data, callback) {
 	}
 };
 
-Pushbullet.push = function(data) {
+Pushbullet.push = async function(data) {
 	var notifObj = data.notification;
 	var uids = data.uids;
 
 	if (!Array.isArray(uids) || !uids.length || !notifObj) {
 		return;
 	}
+	try {
+		var settingsKeys = uids.map(uid => 'user:' + uid + ':settings');
+		const [tokens, settings, title] = await Promise.all([
+			db.getObjectFields('pushbullet:tokens', uids),
+			db.getObjectsFields(settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort', 'language']),
+			notifObj.pid ? topics.getTopicFieldByPid('title', notifObj.pid) : null,
+		]);
 
-	var settingsKeys = uids.map(function(uid) {
-		return 'user:' + uid + ':settings';
-	});
+		resolveNotificationPath(notifObj);
 
-	async.parallel({
-		tokens: async.apply(db.getObjectFields, 'pushbullet:tokens', uids),
-		settings: async.apply(db.getObjectsFields, settingsKeys, ['pushbullet:enabled', 'pushbullet:target', 'topicPostSort', 'language'])
-	}, function(err, results) {
-		if (err) {
-			return winston.error(err.stack);
-		}
+		notifObj.bodyLong = escapeHtml(striptags(unescapeHtml(notifObj.bodyLong || '')));
 
-		if (results.hasOwnProperty('tokens')) {
-			uids.forEach(function(uid, index) {
-				if (!results.tokens[uid] || !results.settings[index]) {
-					return;
-				}
-				if (results.settings[index]['pushbullet:enabled'] === null || parseInt(results.settings[index]['pushbullet:enabled'], 10) === 1) {
-					pushToUid(uid, notifObj, results.tokens[uid], results.settings[index]);
-				}
-			});
-		}
-	});
+		uids.forEach(function(uid, index) {
+			if (!tokens[uid] || !settings[index]) {
+				return;
+			}
+			if (settings[index]['pushbullet:enabled'] === null || parseInt(settings[index]['pushbullet:enabled'], 10) === 1) {
+				pushToUid(uid, notifObj, title, tokens[uid], settings[index]);
+			}
+		});
+	} catch (err) {
+		winston.error(err.stack);
+	}
 };
 
-function pushToUid(uid, notifObj, token, settings) {
-	if (!token) {
-		return;
-	}
-
+function resolveNotificationPath(notifObj) {
 	if (notifObj.hasOwnProperty('path')) {
 		var urlObj = url.parse(notifObj.path, false, true);
 		if (!urlObj.host && !urlObj.hostname) {
@@ -162,30 +157,28 @@ function pushToUid(uid, notifObj, token, settings) {
 			notifObj.path = url.resolve(nconf.get('url') + '/', notifObj.path);
 		}
 	}
+}
+
+function pushToUid(uid, notifObj, title, token, settings) {
+	if (!token) {
+		return;
+	}
 
 	async.waterfall([
 		function(next) {
-			var language = settings.language || meta.config.defaultLang || 'en-GB',
-				topicPostSort = settings.topicPostSort || meta.config.topicPostSort || 'oldest_to_newest';
-
-			notifObj.bodyLong = escapeHtml(striptags(unescapeHtml(notifObj.bodyLong || '')));
-			async.parallel({
-				title: async.apply(topics.getTopicFieldByPid, 'title', notifObj.pid),
-				text: function(next) {
-					translator.translate(notifObj.bodyShort, language, function(translated) {
-						next(undefined, striptags(translated));
-			 		});
-				},
-			}, next);
+			var language = settings.language || meta.config.defaultLang || 'en-GB';
+			translator.translate(notifObj.bodyShort, language, function(translated) {
+				next(null, striptags(translated));
+			});
 		},
-		function(data, next) {
+		function(text, next) {
 			var	payload = {
-					device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
-					type: 'link',
-					title: data.title || data.text,
-					url: notifObj.path || nconf.get('url') + '/post/' + notifObj.pid,
-					body: data.title ? data.text : notifObj.bodyLong
-				};
+				device_iden: settings['pushbullet:target'] && settings['pushbullet:target'].length ? settings['pushbullet:target'] : null,
+				type: 'link',
+				title: title || text,
+				url: notifObj.path || nconf.get('url') + '/post/' + notifObj.pid,
+				body: title ? text : notifObj.bodyLong
+			};
 
 			winston.verbose('[plugins/pushbullet] Sending push notification to uid ' + uid);
 			request.post(constants.push_url, {
