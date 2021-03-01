@@ -1,6 +1,6 @@
 var Pushbullet = require('./library'),
-	meta = module.parent.parent.require('./meta'),
-	nconf = module.parent.parent.require('nconf'),
+	meta = require.main.require('./src/meta'),
+	nconf = require.main.require('nconf'),
 
 	Controllers = {};
 
