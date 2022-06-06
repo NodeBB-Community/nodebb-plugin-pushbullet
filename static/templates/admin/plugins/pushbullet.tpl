@@ -61,23 +61,3 @@
 		</div>
 	</div>
 </div>
-
-<script type="text/javascript">
-	require(['settings'], function(Settings) {
-		Settings.load('pushbullet', $('.pushbullet-settings'));
-
-		$('#save').on('click', function() {
-			Settings.save('pushbullet', $('.pushbullet-settings'), function() {
-				app.alert({
-					type: 'success',
-					alert_id: 'pushbullet-saved',
-					title: 'Reload Required',
-					message: 'Please reload your NodeBB to complete configuration of the Pushbullet plugin',
-					clickfn: function() {
-						socket.emit('admin.reload');
-					}
-				})
-			});
-		});
-	});
-</script>

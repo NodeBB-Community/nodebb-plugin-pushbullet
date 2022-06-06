@@ -29,6 +29,6 @@
     "unescape-html": "^1.1.0"
   },
   "nbbpm": {
-    "compatibility": "^1.13.0"
+    "compatibility": "^2.0.0"
   }
 }

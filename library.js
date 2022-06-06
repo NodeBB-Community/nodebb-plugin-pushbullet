@@ -309,7 +309,7 @@ Pushbullet.isUserAssociated = function(uid, callback) {
 Pushbullet.getAssociatedUsers = function(callback) {
 	db.getObjectKeys('pushbullet:tokens', function(err, uids) {
 		if (!err) {
-			user.getMultipleUserFields(uids, ['username', 'picture'], callback);
+			user.getUsersFields(uids, ['username', 'picture'], callback);
 		} else {
 			callback(err);
 		}

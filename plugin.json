@@ -14,7 +14,8 @@
 	"less": [
 		"static/style.less"
 	],
-	"scripts": [
-		"lib/client-settings.js"
-	]
+	"modules": {
+		"../admin/plugins/pushbullet.js": "static/lib/admin.js",
+		"../client/pushbullet/settings.js": "lib/client-settings.js"
+	}
 }
